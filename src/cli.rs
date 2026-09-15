@@ -7,7 +7,7 @@ use std::path::PathBuf;
 )]
 pub struct Cli {
     /// Video URL (YouTube, Instagram, TikTok, X/Twitter, ...)
-    pub url: String,
+    pub url: Option<String>,
 
     /// Output directory (overrides $YTMP3_DIR and platform defaults)
     #[arg(short = 'o', long = "output-dir", value_name = "DIR")]
@@ -29,6 +29,18 @@ pub struct Cli {
     /// Suppress progress bar (still prints result path)
     #[arg(short = 'q', long)]
     pub quiet: bool,
+
+    /// Start a tiny local web UI instead of downloading from the terminal
+    #[arg(long)]
+    pub ui: bool,
+
+    /// Host for the local web UI
+    #[arg(long = "ui-host", default_value = "127.0.0.1")]
+    pub ui_host: String,
+
+    /// Port for the local web UI
+    #[arg(long = "ui-port", default_value_t = 8787)]
+    pub ui_port: u16,
 }
 
 #[derive(clap::ValueEnum, Clone, Copy, Debug)]
