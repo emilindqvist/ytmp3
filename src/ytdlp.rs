@@ -27,12 +27,13 @@ fn common_args(cli: &Cli, out_dir: &Path) -> Vec<String> {
 }
 
 pub fn probe_filename(cli: &Cli, out_dir: &Path) -> Result<PathBuf, AppError> {
+    let url = required_url(cli)?;
     let mut args = common_args(cli, out_dir);
     args.extend([
         "--simulate".into(),
         "--print".into(),
         "filename".into(),
-        cli.url.clone(),
+        url.to_string(),
     ]);
 
     let output = Command::new(YTDLP)
@@ -72,6 +73,7 @@ pub fn download(
     bar: &ProgressBar,
     cancelled: &Arc<AtomicBool>,
 ) -> Result<(), AppError> {
+    let url = required_url(cli)?;
     let mut args = common_args(cli, out_dir);
     args.extend([
         "--newline".into(),
@@ -80,7 +82,7 @@ pub fn download(
         "--progress-template".into(),
         "download:PROGRESS %(progress._percent_str)s %(progress._speed_str)s %(progress._eta_str)s"
             .into(),
-        cli.url.clone(),
+        url.to_string(),
     ]);
 
     let mut child = Command::new(YTDLP)
@@ -109,6 +111,12 @@ pub fn download(
         }
         None => Err(AppError::Cancelled),
     }
+}
+
+fn required_url(cli: &Cli) -> Result<&str, AppError> {
+    cli.url
+        .as_deref()
+        .ok_or_else(|| AppError::Other(anyhow::anyhow!("missing URL; pass a URL or use --ui")))
 }
 
 fn stream_stdout(

@@ -39,6 +39,14 @@ Grab the latest build for your platform from [Releases](https://github.com/emili
 ytmp3 <url>
 ```
 
+Or start the tiny local UI:
+
+```bash
+ytmp3 --ui
+```
+
+Then open `http://127.0.0.1:8787`.
+
 Examples:
 
 ```bash

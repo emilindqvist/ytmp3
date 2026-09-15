@@ -3,6 +3,7 @@ mod error;
 mod output;
 mod platform;
 mod progress;
+mod ui;
 mod ytdlp;
 
 use crate::cli::Cli;
@@ -15,7 +16,13 @@ use std::sync::Arc;
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
-    match run(cli) {
+    let result = if cli.ui {
+        ui::serve(&cli.ui_host, cli.ui_port)
+    } else {
+        run(cli)
+    };
+
+    match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("error: {e}");
@@ -25,6 +32,11 @@ fn main() -> ExitCode {
 }
 
 fn run(cli: Cli) -> Result<(), AppError> {
+    let url = cli
+        .url
+        .as_deref()
+        .ok_or_else(|| anyhow::anyhow!("missing URL; pass a URL or use --ui"))?;
+
     let cancelled = Arc::new(AtomicBool::new(false));
     {
         let c = Arc::clone(&cancelled);
@@ -33,7 +45,7 @@ fn run(cli: Cli) -> Result<(), AppError> {
         });
     }
 
-    let plat = platform::detect(&cli.url);
+    let plat = platform::detect(url);
     eprintln!("Detected: {plat}");
 
     let out_dir = output::resolve(cli.output_dir.as_deref())?;
