@@ -108,7 +108,7 @@ fn download_response(body: &[u8], state: AppState) -> String {
     let form = parse_form(body);
     let url = form_value(&form, "url").trim().to_string();
     if url.is_empty() {
-        return page(Some(Status::Error("Paste a URL first.".into())), None);
+        return page(Some(ErrorStatus("Paste a URL first.".into())), None);
     }
 
     let bitrate = form_value(&form, "bitrate")
@@ -240,17 +240,11 @@ fn form_value<'a>(form: &'a [(String, String)], key: &str) -> &'a str {
         .unwrap_or("")
 }
 
-enum Status {
-    Success(String),
-    Error(String),
-}
+struct ErrorStatus(String);
 
-fn page(status: Option<Status>, job_id: Option<u64>) -> String {
+fn page(status: Option<ErrorStatus>, job_id: Option<u64>) -> String {
     let status_html = match status {
-        Some(Status::Success(message)) => {
-            format!(r#"<p class="status success">{}</p>"#, escape_html(&message))
-        }
-        Some(Status::Error(message)) => {
+        Some(ErrorStatus(message)) => {
             format!(r#"<p class="status error">{}</p>"#, escape_html(&message))
         }
         None => String::new(),
