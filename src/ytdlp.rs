@@ -73,6 +73,19 @@ pub fn download(
     bar: &ProgressBar,
     cancelled: &Arc<AtomicBool>,
 ) -> Result<(), AppError> {
+    download_with_progress(cli, out_dir, bar, cancelled, |_| {})
+}
+
+pub fn download_with_progress<F>(
+    cli: &Cli,
+    out_dir: &Path,
+    bar: &ProgressBar,
+    cancelled: &Arc<AtomicBool>,
+    mut on_progress: F,
+) -> Result<(), AppError>
+where
+    F: FnMut(&progress::Progress),
+{
     let url = required_url(cli)?;
     let mut args = common_args(cli, out_dir);
     args.extend([
@@ -93,7 +106,7 @@ pub fn download(
         .spawn()
         .map_err(map_spawn_err)?;
 
-    stream_stdout(&mut child, bar, cancelled)?;
+    stream_stdout(&mut child, bar, cancelled, &mut on_progress)?;
 
     let status = child.wait().map_err(AppError::Io)?;
 
@@ -123,6 +136,7 @@ fn stream_stdout(
     child: &mut Child,
     bar: &ProgressBar,
     cancelled: &Arc<AtomicBool>,
+    on_progress: &mut dyn FnMut(&progress::Progress),
 ) -> Result<(), AppError> {
     let stdout = match child.stdout.take() {
         Some(s) => s,
@@ -140,6 +154,7 @@ fn stream_stdout(
         };
         if let Some(p) = progress::parse(&line) {
             progress::apply(bar, &p);
+            on_progress(&p);
         }
     }
     Ok(())
